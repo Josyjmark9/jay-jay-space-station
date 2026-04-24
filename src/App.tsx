@@ -235,22 +235,23 @@ export default function App() {
     <>
       <div className="relative w-full bg-black text-white font-sans">
         {/* Fixed Background Canvas */}
-        <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-zinc-950">
+        <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-black">
           {/* Fallback Video Background */}
           <video
             autoPlay
             muted
             loop
             playsInline
+            preload="auto"
             onCanPlay={() => setVideoLoaded(true)}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-80' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
           >
             <source src="/bg-video.mp4" type="video/mp4" />
           </video>
 
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full will-change-transform z-10 opacity-70"
+            className="absolute inset-0 w-full h-full will-change-transform z-10 opacity-60 mix-blend-screen"
             style={{ scale: 1.05 }}
           />
           {/* Overlay gradient for readability */}
