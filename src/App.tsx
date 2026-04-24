@@ -97,7 +97,8 @@ export default function App() {
   // Preload images
   useEffect(() => {
     let loadedCount = 0;
-    const images: HTMLImageElement[] = [];
+    const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
+    imagesRef.current = images;
 
     for (let i = 1; i <= TOTAL_FRAMES; i++) {
       const img = new Image();
@@ -108,14 +109,13 @@ export default function App() {
         loadedCount++;
         setLoadedProgress(Math.round((loadedCount / TOTAL_FRAMES) * 100));
         if (loadedCount === TOTAL_FRAMES) {
-          imagesRef.current = images;
           setIsLoaded(true);
         }
       };
       
       img.onload = handleLoad;
       img.onerror = handleLoad; // Proceed even on error to not block
-      images.push(img);
+      images[i - 1] = img;
     }
   }, []);
 
@@ -162,8 +162,6 @@ export default function App() {
 
   // Scroll and Resize handling
   useEffect(() => {
-    if (!isLoaded) return;
-
     // Initial draw
     drawFrame(0);
 
@@ -203,11 +201,11 @@ export default function App() {
       window.removeEventListener('resize', handleResize);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isLoaded]);
+  }, []);
 
   // Mouse Parallax
   useEffect(() => {
-    if (!isLoaded || !canvasRef.current) return;
+    if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
 
@@ -228,24 +226,10 @@ export default function App() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isLoaded]);
+  }, []);
 
   return (
     <>
-      {/* Loading Overlay - Rendered ON TOP, not instead of, to prevent hydration errors */}
-      {!isLoaded && (
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-black text-white font-sans z-50">
-          <div className="text-[10px] font-mono tracking-widest mb-4 text-white/50 uppercase">JJ Aerospace Systems Initializing</div>
-          <div className="text-4xl font-mono">{loadedProgress}%</div>
-          <div className="w-64 h-[1px] bg-white/10 mt-8 overflow-hidden">
-            <div 
-              className="h-full bg-white transition-all duration-300 ease-out"
-              style={{ width: `${loadedProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="relative w-full bg-black text-white font-sans">
         {/* Fixed Background Canvas */}
         <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-black">
