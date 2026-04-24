@@ -14,7 +14,7 @@ import {
   AdaptiveEvents,
   Bvh
 } from '@react-three/drei';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import * as THREE from 'three';
 
 const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -91,9 +91,19 @@ const ModelInner = ({
 
   const ext = useMemo(() => url.split('.').pop()?.toLowerCase(), [url]);
   const content = useMemo(() => {
-    if (ext === 'glb' || ext === 'gltf') return useGLTF(url, 'https://www.gstatic.com/draco/v1/decoders/').scene.clone();
-    if (ext === 'fbx') return useFBX(url).clone();
-    if (ext === 'obj') return useLoader(OBJLoader, url).clone();
+    if (ext === 'glb' || ext === 'gltf') {
+      const gltf = useGLTF(url, 'https://www.gstatic.com/draco/v1/decoders/');
+      const scene = Array.isArray(gltf) ? gltf[0].scene : gltf.scene;
+      return scene.clone();
+    }
+    if (ext === 'fbx') {
+      const fbx = useFBX(url);
+      return (Array.isArray(fbx) ? fbx[0] : fbx).clone();
+    }
+    if (ext === 'obj') {
+      const obj = useLoader(OBJLoader, url);
+      return (Array.isArray(obj) ? obj[0] : obj).clone();
+    }
     console.error('Unsupported format:', ext);
     return null;
   }, [url, ext]);

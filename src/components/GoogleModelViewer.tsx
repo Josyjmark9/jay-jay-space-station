@@ -12,7 +12,7 @@ interface GoogleModelViewerProps {
   className?: string;
 }
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'model-viewer': any;

@@ -58,7 +58,7 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameRef = useRef(0);
-  const requestRef = useRef<number>(undefined);
+  const requestRef = useRef<number | null>(null);
 
   const screen3Ref = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
@@ -184,7 +184,7 @@ export default function App() {
 
       if (frameIndex !== currentFrameRef.current) {
         currentFrameRef.current = frameIndex;
-        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
         requestRef.current = requestAnimationFrame(() => drawFrame(frameIndex));
       }
     };
@@ -202,7 +202,7 @@ export default function App() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
     };
   }, []);
 
@@ -235,26 +235,26 @@ export default function App() {
     <>
       <div className="relative w-full bg-black text-white font-sans">
         {/* Fixed Background Canvas */}
-        <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-black">
+        <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-zinc-950">
           {/* Fallback Video Background */}
           <video
             autoPlay
             muted
             loop
             playsInline
-            onLoadedData={() => setVideoLoaded(true)}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-40' : 'opacity-0'}`}
+            onCanPlay={() => setVideoLoaded(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-80' : 'opacity-0'}`}
           >
             <source src="/bg-video.mp4" type="video/mp4" />
           </video>
 
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full will-change-transform z-10"
+            className="absolute inset-0 w-full h-full will-change-transform z-10 opacity-70"
             style={{ scale: 1.05 }}
           />
           {/* Overlay gradient for readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60 z-20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 z-20 pointer-events-none" />
         </div>
 
       {/* Fixed Header */}
