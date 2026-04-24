@@ -69,6 +69,7 @@ export default function App() {
 
   // Logo Scroll Transformation
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [videoLoaded, setVideoLoaded] = useState(false);
   
   useEffect(() => {
     setDimensions({ width: window.innerWidth, height: window.innerHeight });
@@ -82,41 +83,43 @@ export default function App() {
   const headerOpacity = useTransform(scrollY, [800, 1100], [1, 0]);
   
   // Logo Epic Transition
-  // It starts moving and expanding as soon as you scroll, hitting the center around 800px
   const logoX = useTransform(scrollY, [0, 1000], [0, dimensions.width * 0.35]);
   const logoY = useTransform(scrollY, [0, 1000], [0, dimensions.height * 0.4]);
   const logoScale = useTransform(scrollY, [0, 1000], [1, 10]);
   const logoLetterSpacing = useTransform(scrollY, [0, 1000], ["-0.05em", "2.5em"]);
   const logoOpacity = useTransform(scrollY, [0, 800, 1200], [1, 0.08, 0]);
-  const subOpacity = useTransform(scrollY, [0, 300], [1, 0]); // Fade subtitle quickly
+  const subOpacity = useTransform(scrollY, [0, 300], [1, 0]); 
 
   // Finish flattening when it's 80% of the way to the top
   const rotateX = useTransform(screen3Progress, [0, 0.8], [15, 0]);
   const y = useTransform(screen3Progress, [0, 0.8], [100, 0]);
 
-  // Preload images
+  // Preload images - Non-blocking
   useEffect(() => {
-    let loadedCount = 0;
     const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
     imagesRef.current = images;
 
-    for (let i = 1; i <= TOTAL_FRAMES; i++) {
+    // Load first 10 frames as a priority for immediate scroll response
+    const loadFrame = (i: number) => {
       const img = new Image();
       const frameNumber = i.toString().padStart(3, '0');
       img.src = `/ezgif-frame-${frameNumber}.jpg`;
-      
-      const handleLoad = () => {
-        loadedCount++;
-        setLoadedProgress(Math.round((loadedCount / TOTAL_FRAMES) * 100));
-        if (loadedCount === TOTAL_FRAMES) {
-          setIsLoaded(true);
+      img.onload = () => {
+        images[i - 1] = img;
+        // If it's the first frame, draw it immediately
+        if (i === 1 && currentFrameRef.current === 0) {
+          drawFrame(0);
         }
       };
-      
-      img.onload = handleLoad;
-      img.onerror = handleLoad; // Proceed even on error to not block
-      images[i - 1] = img;
-    }
+    };
+
+    // Load frames 1-10 immediately
+    for (let i = 1; i <= 10; i++) loadFrame(i);
+
+    // Load the rest after a short delay to prioritize video/UI
+    setTimeout(() => {
+      for (let i = 11; i <= TOTAL_FRAMES; i++) loadFrame(i);
+    }, 100);
   }, []);
 
   // Canvas drawing logic
@@ -233,13 +236,25 @@ export default function App() {
       <div className="relative w-full bg-black text-white font-sans">
         {/* Fixed Background Canvas */}
         <div className="fixed top-0 left-0 w-full h-screen z-0 overflow-hidden bg-black">
+          {/* Fallback Video Background */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            onLoadedData={() => setVideoLoaded(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? 'opacity-40' : 'opacity-0'}`}
+          >
+            <source src="/bg-video.mp4" type="video/mp4" />
+          </video>
+
           <canvas
             ref={canvasRef}
-            className="w-full h-full will-change-transform"
+            className="absolute inset-0 w-full h-full will-change-transform z-10"
             style={{ scale: 1.05 }}
           />
           {/* Overlay gradient for readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/60 z-20 pointer-events-none" />
         </div>
 
       {/* Fixed Header */}
